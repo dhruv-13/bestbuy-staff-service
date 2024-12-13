@@ -186,3 +186,5 @@ http://<host>:3000
    kubectl get svc
    ```
 
+## Issues:
+The Kubernetes cluster was deployed successfully but then there was problem during the deployment of the CI/CD pipeline. All the other tasks like Build, Test and Release was successfully done. 
