@@ -1,5 +1,5 @@
-# Base image
-FROM node:14
+# Use a more recent node LTS version
+FROM node:18
 
 # Set working directory
 WORKDIR /app
@@ -10,7 +10,7 @@ COPY package.json package-lock.json ./
 # Install dependencies
 RUN npm install
 
-# Copy application files
+# Copy the rest of the application files
 COPY . .
 
 # Expose application port

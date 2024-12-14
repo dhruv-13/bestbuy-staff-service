@@ -3,13 +3,11 @@ name: Build, Test, and Deploy
 on:
   push:
     branches:
-      - main # Trigger on pushes to the main branch
+      - main
 
 jobs:
-  # Step 1: Build Job (Unit Test and Build Docker Image)
   Build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -17,7 +15,6 @@ jobs:
       - name: Install Dependencies
         run: echo "Simulating Install Dependencies... Install Dependencies completed successfully!"
 
-      # Test individual units or components of the code in isolation, such as functions or classes.
       - name: Unit Tests
         run: echo "Simulating unit tests... Test execution completed successfully!"
 
@@ -29,40 +26,29 @@ jobs:
 
       - name: Build Docker Image
         env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME }}
+          DOCKER_IMAGE_NAME: "staff-service"
         run: |
-          docker build -t $DOCKER_USERNAME/$DOCKER_IMAGE_NAME:test .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/$DOCKER_IMAGE_NAME:test .
 
       - name: Push Docker Image
         env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME }}
+          DOCKER_IMAGE_NAME: "staff-service"
         run: |
-          docker push $DOCKER_USERNAME/$DOCKER_IMAGE_NAME:test
+          docker push ${{ secrets.DOCKER_USERNAME }}/$DOCKER_IMAGE_NAME:test
 
-  # Step 2: Test Job (Integration Tests)
   Test:
     runs-on: ubuntu-latest
-
-    # Ensure the Test job only runs if Build passes
     needs: Build
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Validate the interactions between different parts of the application
       - name: Integration Tests
         run: echo "Simulating integration tests... Test execution completed successfully!"
 
-  # Step 3: Release Job (Release Docker Image)
   Release:
     runs-on: ubuntu-latest
-
-    # Ensure the Release job only runs if Test passes
     needs: Test
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -75,20 +61,15 @@ jobs:
 
       - name: Promote Docker Image to Latest
         env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME }}
+          DOCKER_IMAGE_NAME: "staff-service"
         run: |
-          docker pull $DOCKER_USERNAME/$DOCKER_IMAGE_NAME:test
-          docker tag $DOCKER_USERNAME/$DOCKER_IMAGE_NAME:test $DOCKER_USERNAME/$DOCKER_IMAGE_NAME:latest
-          docker push $DOCKER_USERNAME/$DOCKER_IMAGE_NAME:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/$DOCKER_IMAGE_NAME:test
+          docker tag ${{ secrets.DOCKER_USERNAME }}/$DOCKER_IMAGE_NAME:test ${{ secrets.DOCKER_USERNAME }}/$DOCKER_IMAGE_NAME:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/$DOCKER_IMAGE_NAME:latest
 
-  # Step 4: Deploy Job
   Deploy:
     runs-on: ubuntu-latest
-
-    # Ensure the Deploy job only runs if the Release is successful
     needs: Release
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -96,21 +77,20 @@ jobs:
       - name: Deploy to AKS
         env:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_IMAGE_NAME: ${{ vars.DOCKER_IMAGE_NAME }}
-          DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}
-          CONTAINER_NAME: ${{ vars.CONTAINER_NAME }}
+          DOCKER_IMAGE_NAME: "staff-service"
+          DEPLOYMENT_NAME: "staff-service"
+          CONTAINER_NAME: "staff-service"
         run: |
           echo "$KUBE_CONFIG_DATA" | base64 -d > minimal_kube_config.yaml
           export KUBECONFIG=minimal_kube_config.yaml
-          kubectl set image deployment/$DEPLOYMENT_NAME $CONTAINER_NAME=$DOCKER_USERNAME/$DOCKER_IMAGE_NAME:latest
+          kubectl set image deployment/$DEPLOYMENT_NAME $CONTAINER_NAME=${{ secrets.DOCKER_USERNAME }}/$DOCKER_IMAGE_NAME:latest
           kubectl rollout restart deployment/$DEPLOYMENT_NAME
           kubectl rollout status deployment/$DEPLOYMENT_NAME
 
       - name: Verify Deployment
         env:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-          DEPLOYMENT_NAME: ${{ vars.DEPLOYMENT_NAME }}
+          DEPLOYMENT_NAME: "staff-service"
         run: |
           echo "$KUBE_CONFIG_DATA" | base64 -d > minimal_kube_config.yaml
           export KUBECONFIG=minimal_kube_config.yaml

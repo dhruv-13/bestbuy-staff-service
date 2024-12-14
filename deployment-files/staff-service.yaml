@@ -1,10 +1,9 @@
-# Deployment for Staff-Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: staff-service
 spec:
-  replicas: 1 # Single replica
+  replicas: 1
   selector:
     matchLabels:
       app: staff-service
@@ -17,52 +16,37 @@ spec:
         "kubernetes.io/os": linux
       containers:
         - name: staff-service
-          image: dhruv766/staff-service:final # Custom image for staff service
+          image: dhruv766/staff-service:final
           ports:
-            - containerPort: 3000 # Staff service listens on this port
-          env: # Environment variables for configuration
+            - containerPort: 3000
+          env:
             - name: FASTIFY_ADDRESS
               value: "0.0.0.0"
-          resources: # Resource allocation
+          resources:
             requests:
-              cpu: 1m
-              memory: 50Mi
+              cpu: 50m
+              memory: 256Mi
             limits:
               cpu: 100m
-              memory: 256Mi
-          startupProbe: # Initial health check
+              memory: 512Mi
+          startupProbe:
             httpGet:
               path: /health
               port: 3000
             failureThreshold: 5
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
             periodSeconds: 10
-          readinessProbe: # Ready status probe
+          readinessProbe:
             httpGet:
               path: /health
               port: 3000
             failureThreshold: 3
-            initialDelaySeconds: 3
+            initialDelaySeconds: 5
             periodSeconds: 5
-          livenessProbe: # Ongoing health check
+          livenessProbe:
             httpGet:
               path: /health
               port: 3000
-            failureThreshold: 5
-            initialDelaySeconds: 3
-            periodSeconds: 3
----
-# Service for Staff-Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: staff-service
-spec:
-  type: ClusterIP
-  ports:
-    - name: http
-      port: 3000
-      targetPort: 3000
-  selector:
-    app: staff-service
----
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 5
