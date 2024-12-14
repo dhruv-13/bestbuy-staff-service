@@ -151,7 +151,7 @@ http://<host>:3000
 
 2. Install dependencies:
    ```bash
-   npm install
+   npm install 
    ```
 
 3. Start the service:
